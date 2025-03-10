@@ -14,7 +14,6 @@ import { motion } from 'framer-motion'
 import { containerVariants, inputVariants } from "../../constants/animation.motion"
 import Button from "../../components/Button"
 import path from "../../constants/path"
-import RobotCaptcha from "@uth/components/CaptchaRobot"
 import { useState } from "react"
 
 type FormData = {
@@ -33,7 +32,6 @@ export default function Login() {
     const  { t } = useTranslation()
     const { setIsAuthenticated, setUser } = useAuth()
     const navigate = useNavigate()
-    const [isNotRobot, setIsNotRobot] = useState(false)
     const buttonClass = "text-white w-full disabled:opacity-70 text-center py-4 uppercase bg-orange rounded-md text-sm hover:bg-orange-500"
 
     const {
@@ -125,17 +123,11 @@ export default function Login() {
                       register={register}
                       type={field === 'password' ? 'password' : 'text'}
                       errorMessage={errors[field]?.message}
-                      placeholder={t(field === 'firstField' ? 'Username or Email' : 'Password')}
-                      onKeyDown={(e) => {
-                        if (field === 'password' && !isNotRobot && e.key === "Enter") {
-                          e.preventDefault();
-                        }
-                      }}
+                      placeholder={t(field === 'firstField' ? 'Username or Email' : 'Password')} 
                     />
                   </motion.div>
               ))}
 
-              <RobotCaptcha onVerify={() => setIsNotRobot(true)}/>
 
               <motion.div
                 className="mt-8"
@@ -147,7 +139,7 @@ export default function Login() {
                   type="submit"
                   isLoading={loginMutation.isLoading}
                   disabled={loginMutation.isLoading}
-                  className={!isNotRobot ? buttonClass + "pointer-events-none cursor-not-allowed opacity-70" : buttonClass}
+                  className={buttonClass}
                 >
                   {t('Login')}
                 </Button>
