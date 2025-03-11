@@ -58,12 +58,11 @@ export default function ProductDetail() {
   } 
   
   const _variantId = getVariantId({productData, selectedOptions})
-  console.log('variant', _variantId)
 
   const checkOnCart = () => {
     return cartDataDetail?.find(item => item.product_variant_id === _variantId)?.quantity
   }
-  console.log('check on cart',checkOnCart()) 
+  console.log(checkOnCart()) 
    
   const addProduct = async () => {
       if(addToCartMutation.isLoading) return
