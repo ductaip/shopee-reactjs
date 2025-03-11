@@ -4,11 +4,15 @@ import Product from '@uth/components/Product'
 import path from '@uth/constants/path'
 import { useCart } from '@uth/queries/useCart'
 import { useProductAll } from '@uth/queries/useProduct'
+import { CartItem } from '@uth/types/cart.type'
 import { generateNameId } from '@uth/utils/utils'
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+ 
 
 export default function Cart() {
+    // const { extendedPurchases, setExtendedPurchases } = useState<CartItem>([])
+
     const {data, isLoading} = useCart()
     const cartData = data?.result.items
     const {data: productListData} = useProductAll() 
