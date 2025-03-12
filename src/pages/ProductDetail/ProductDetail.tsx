@@ -71,6 +71,7 @@ export default function ProductDetail() {
       if(!isAuthenticated) {
         toast.info("Please login to add product")
         navigate('/login')
+        return
       }
       if(addToCartMutation.isLoading) return
       const checkCart = checkOnCart()
