@@ -16,9 +16,10 @@ import React from 'react'
 import { queryClient } from '@uth/main' 
 import { useCart } from '@uth/queries/useCart'
 import { useAuth } from '@uth/contexts/auth.context'
+import { getAccessTokenFromLS } from '@uth/utils/auth.http'
 
 export default function ProductDetail() {
-  const {isAuthenticated} = useAuth()
+   
   const {productSlug} = useParams()
   // console.log(productSlug)
   const id = getIdFromNameId(productSlug as string)
@@ -67,7 +68,7 @@ export default function ProductDetail() {
    
   const addProduct = async () => {
       const navigate = useNavigate()
-      if(!isAuthenticated) {
+      if(!getAccessTokenFromLS()) {
         toast.info("Please login to add product")
         navigate('/login')
         return
