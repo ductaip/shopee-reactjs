@@ -10,12 +10,14 @@ import { useProductAll } from '@uth/queries/useProduct'
 import { CartItem } from '@uth/types/cart.type'
 import { generateNameId } from '@uth/utils/utils'
 import { produce } from 'immer'
+// import { keyBy } from 'lodash'
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
  
 interface stateProps extends CartItem {
-  checked: boolean
+  checked: boolean,
+  disabled: boolean
 }
 
 export default function Cart() {
@@ -26,31 +28,67 @@ export default function Cart() {
     const cartData = data?.result.items
     const {data: productListData} = useProductAll()
     const isAllChecked = extendedPurchases.every((item) => item.checked)
+    const updateToCartMutation = useMutation(cartApi.addToCart)
 
     
     useEffect(() => {
-      setExtendedPurchases(cartData?.map(item => ({
-        ...item,
-        checked: false
-      })) || []
+      setExtendedPurchases((prev) => {
+        // const extendObj = keyBy(prev, 'id')
+        return (
+          cartData?.map(item => ({
+            ...item,
+            disabled: false,
+            checked: Boolean(item.selected_to_checkout)
+          })) || []
+        )
+      }
     )
     }, [cartData])
 
-    const handleCheck = (purchaseIndex: number) => 
-      (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCheck = (cartIndex: number) => 
+      async (event: React.ChangeEvent<HTMLInputElement>) => {
         setExtendedPurchases(
           produce((draft) => {
-            draft[purchaseIndex].checked = event.target.checked;
+            draft[cartIndex].checked = event.target.checked;
           })
         );
+        
+        try {
+          await updateToCartMutation.mutateAsync({
+            product_id: extendedPurchases[cartIndex]?.product_id,
+            shop_id: extendedPurchases[cartIndex]?.shop_id,
+            product_variant_id: extendedPurchases[cartIndex]?.product_variant_id || undefined,
+            selected_to_checkout: !extendedPurchases[cartIndex]?.checked,
+            quantity: extendedPurchases[cartIndex].quantity
+          })  
+        } catch (error) {
+          console.warn('Handle check fail', error)
+        }
       };
 
-      const handleCheckAll = () => {
-        setExtendedPurchases(prev => prev.map(item => ({
+    const handleCheckAll = async () => {
+      setExtendedPurchases(prev => prev.map(item => ({
           ...item,
           checked: !isAllChecked
         })))
+
+      try {
+        const updatePromises = extendedPurchases.map(item =>
+          updateToCartMutation.mutateAsync({
+            product_id: item?.product_id,
+            shop_id: item?.shop_id,
+            product_variant_id: item?.product_variant_id || undefined,
+            selected_to_checkout: !item?.checked,
+            quantity: item.quantity
+          })  
+        );
+      
+        await Promise.all(updatePromises);
+        console.log('Handle all checked is successful')
+      } catch (error) {
+        console.warn('Handle checked all fail', error)
       }
+    }
 
     const handleDelete = async (id?: number) => {
       if(!id) return
@@ -64,6 +102,25 @@ export default function Cart() {
         }
       })
       
+    }
+
+    const handleInputQuantity = async (cartIndex: number, value: number) => {
+      const item = extendedPurchases[cartIndex]
+      setExtendedPurchases(
+        produce((draft) => {
+          draft[cartIndex].disabled = true
+        })
+      )
+      await updateToCartMutation.mutateAsync({
+        product_id: item?.product_id,
+        shop_id: item?.shop_id,
+        product_variant_id: item?.product_variant_id,
+        quantity: value
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({queryKey: ['cart']})
+        }
+      })
     }
 
     return (
@@ -137,6 +194,9 @@ export default function Cart() {
                             max={50}
                             value={item.quantity}
                             classNameWrapper='flex items-center'
+                            onIncrease={value => handleInputQuantity(index, value)}
+                            onDecrease={value => handleInputQuantity(index, value)}
+                            disabled={item.disabled}
                           />
                         </div>
                         <div className="col-span-1 ml-1">
@@ -164,11 +224,11 @@ export default function Cart() {
               <div>
                 <div className="flex items-center sm:justify-end">
                   <div>Tổng thanh toán ({cartData?.length || 0} sản phẩm):</div>
-                  <div className="ml-2 text-2xl text-orange">đ139000</div>
+                  <div className="ml-2 text-2xl text-orange">đ{data?.result?.total?.toLocaleString('VN')}</div>
                 </div>
                 <div className="flex items-center sm:justify-end text-sm">
                   <div className='text-gray-500'>Tiết kiệm</div>
-                  <div className="ml-6 text-orange">đ139000</div>
+                  <div className="ml-6 text-orange">đ{(((data?.result?.total || 100000) * 0.25)).toLocaleString('VN')}</div>
                 </div>
               </div>
               <Button className='flex mt-5 sm:mt-0 h-10 w-52 sm:ml-4 items-center justify-center bg-red-500 text-sm uppercase text-white hover:bg-red-600'>Mua hàng</Button>
