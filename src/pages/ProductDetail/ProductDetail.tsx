@@ -35,7 +35,7 @@ export default function ProductDetail() {
     [productData, currentIndexImages]
   )
   const {data: cartData} = useCart()
-  const cartDataDetail = cartData?.result.items
+  const cartDataDetail = cartData?.result?.items
   const addToCartMutation = useMutation(cartApi.addToCart)
 
   useEffect(() => {
@@ -64,7 +64,6 @@ export default function ProductDetail() {
   const checkOnCart = () => {
     return cartDataDetail?.find(item => item.product_variant_id === _variantId)?.quantity
   }
-  console.log(checkOnCart()) 
    
   const addProduct = async () => {
       const navigate = useNavigate()
