@@ -11,7 +11,7 @@ export const useCart = () => {
   })
 }
  
-export const useDeleteMutation = (id: number) => {
+export const useDeleteMutation = () => {
   return useMutation({
     mutationFn: cartApi.removeItemFromCart
   })
